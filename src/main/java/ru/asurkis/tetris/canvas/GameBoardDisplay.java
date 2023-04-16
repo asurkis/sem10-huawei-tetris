@@ -3,6 +3,7 @@ package ru.asurkis.tetris.canvas;
 import ru.asurkis.tetris.GameLogic;
 import ru.asurkis.tetris.Tetramino;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -11,7 +12,7 @@ import static ru.asurkis.tetris.GameLogic.FIELD_WIDTH;
 import static ru.asurkis.tetris.canvas.Constants.CELL_COLORS;
 import static ru.asurkis.tetris.canvas.Constants.MIN_CELL_SIZE;
 
-public class GameBoardDisplay extends Canvas {
+public class GameBoardDisplay extends JPanel {
     private final GameLogic game;
     private BufferedImage backBuffer = new BufferedImage(FIELD_WIDTH * MIN_CELL_SIZE, FIELD_HEIGHT_VISIBLE * MIN_CELL_SIZE, BufferedImage.TYPE_3BYTE_BGR);
 
@@ -19,11 +20,11 @@ public class GameBoardDisplay extends Canvas {
         setMinimumSize(new Dimension(FIELD_WIDTH * MIN_CELL_SIZE, FIELD_HEIGHT_VISIBLE * MIN_CELL_SIZE));
         setPreferredSize(getMinimumSize());
         this.game = game;
-        game.addStateListener(this::invalidate);
+        game.addStateListener(this::repaint);
     }
 
     @Override
-    public void paint(Graphics graphics) {
+    public void paintComponent(Graphics graphics) {
         int w = getWidth();
         int h = getHeight();
         if (backBuffer.getWidth() < w || backBuffer.getHeight() < h)
@@ -40,18 +41,24 @@ public class GameBoardDisplay extends Canvas {
                 int tx = cellSize * x;
                 int ty = cellSize * (FIELD_HEIGHT_VISIBLE - y - 1);
                 int colorIdx = game.getTetraminoIndexAt(x, y) + 1;
-                g.setColor(Color.WHITE);
+                g.setColor(CELL_COLORS[colorIdx]);
                 g.fillRect(tx, ty, cellSize, cellSize);
-                g.setColor(Color.BLACK);
-                g.drawRect(tx, ty, cellSize, cellSize);
             }
         }
 
-        Tetramino current = game.getCurrentTetramino();
-
+        Tetramino current = game.getFallingTetramino();
+        int fallingX = game.getFallingX();
+        int fallingY = game.getFallingY();
+        g.setColor(CELL_COLORS[current.ordinal() + 1]);
+        for (int[] xy : current.coords(game.getFallingRotation())) {
+            int ey = fallingY + xy[1];
+            if (ey >= FIELD_HEIGHT_VISIBLE)
+                continue;
+            int tx = cellSize * (fallingX + xy[0]);
+            int ty = cellSize * (FIELD_HEIGHT_VISIBLE - 1 - ey);
+            g.fillRect(tx, ty, cellSize, cellSize);
+        }
 
         graphics.drawImage(backBuffer, 0, 0, this);
-        graphics.setColor(Color.RED);
-        graphics.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
     }
 }

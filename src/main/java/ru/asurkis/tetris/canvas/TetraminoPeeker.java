@@ -3,15 +3,14 @@ package ru.asurkis.tetris.canvas;
 import ru.asurkis.tetris.GameLogic;
 import ru.asurkis.tetris.Tetramino;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static ru.asurkis.tetris.GameLogic.FIELD_HEIGHT_VISIBLE;
-import static ru.asurkis.tetris.GameLogic.FIELD_WIDTH;
 import static ru.asurkis.tetris.canvas.Constants.CELL_COLORS;
 import static ru.asurkis.tetris.canvas.Constants.MIN_CELL_SIZE;
 
-public class TetraminoPeeker extends Canvas {
+public class TetraminoPeeker extends JPanel {
     private final GameLogic game;
     private BufferedImage backBuffer = new BufferedImage(4 * MIN_CELL_SIZE, 4 * MIN_CELL_SIZE, BufferedImage.TYPE_3BYTE_BGR);
 
@@ -19,11 +18,11 @@ public class TetraminoPeeker extends Canvas {
         setMinimumSize(new Dimension(4 * MIN_CELL_SIZE, 4 * MIN_CELL_SIZE));
         setPreferredSize(getMinimumSize());
         this.game = game;
-        game.addStateListener(this::invalidate);
+        game.addStateListener(this::repaint);
     }
 
     @Override
-    public void paint(Graphics graphics) {
+    public void paintComponent(Graphics graphics) {
         int w = getWidth();
         int h = getHeight();
         if (backBuffer.getWidth() < w || backBuffer.getHeight() < h)

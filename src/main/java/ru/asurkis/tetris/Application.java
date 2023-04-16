@@ -12,11 +12,9 @@ import static ru.asurkis.tetris.GameLogic.FIELD_WIDTH;
 import static ru.asurkis.tetris.GameLogic.FIELD_HEIGHT_VISIBLE;
 
 public class Application {
-    private final Timer timer = new Timer();
-    private final JFrame frame = new JFrame("Tetris");
-    private final GameLogic game = new GameLogic();
-
-    {
+    void run() {
+        JFrame frame = new JFrame("Tetris");
+        GameLogic game = new GameLogic();
         frame.setLayout(new GridBagLayout());
 
         GridBagConstraints gbcBoard = new GridBagConstraints();
@@ -41,34 +39,44 @@ public class Application {
         gbcInfo.gridx = FIELD_WIDTH;
         gbcInfo.gridy = 4;
         gbcInfo.gridwidth = 4;
-        gbcInfo.gridheight = FIELD_HEIGHT_VISIBLE - 4;
+        gbcInfo.gridheight = 1;
         gbcInfo.weightx = 1.0;
         gbcInfo.weighty = 1.0;
         gbcInfo.fill = GridBagConstraints.BOTH;
 
+        JLabel gameStatus = new JLabel();
+        game.addStateListener(() -> {
+            if (game.isGameOver()) {
+                gameStatus.setText("Game over!");
+            } else if (game.isGamePaused()) {
+                gameStatus.setText("PAUSE");
+            } else {
+                gameStatus.setText("");
+            }
+        });
+
         frame.add(new GameBoardDisplay(game), gbcBoard);
         frame.add(new TetraminoPeeker(game), gbcPeeker);
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.YELLOW);
-        frame.add(panel, gbcInfo);
+        frame.add(gameStatus, gbcInfo);
 
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.addKeyListener(new MyKeyListener(game));
-    }
 
-    void start() {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-        timer.schedule(new TimerTask() {
+        new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
                 game.gameTick();
             }
-        }, 250);
+        }, 250, 250);
+    }
+
+    void start() {
     }
 
     public static void main(String[] args) {
-        new Application().start();
+        new Application().run();
     }
 }

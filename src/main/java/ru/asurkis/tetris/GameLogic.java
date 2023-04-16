@@ -10,11 +10,10 @@ public class GameLogic {
     private final List<Runnable> stateListeners = new ArrayList<>();
     private final Random random;
 
-    private Tetramino currentTetramino;
-    private int currentX;
-    private int currentY;
-    private int currentQuarter;
-    private int currentRotation;
+    private Tetramino fallingTetramino;
+    private int fallingX;
+    private int fallingY;
+    private int fallingRotation;
     private final Queue<Tetramino> nextTetramino = new ArrayDeque<>();
     private final int[][] fieldState = new int[FIELD_HEIGHT_HIDDEN][FIELD_WIDTH];
 
@@ -32,18 +31,26 @@ public class GameLogic {
     }
 
     public void reset() {
-        isGameOver = false;
-        nextTetramino.clear();
-        refillQueue();
         for (int i = 0; i < FIELD_HEIGHT_HIDDEN; i++) {
             Arrays.fill(fieldState[i], -1);
         }
+        isGameOver = false;
+        nextTetramino.clear();
+        takeNext();
+        fireUpdateState();
     }
 
     private void takeNext() {
         refillQueue();
-        currentTetramino = nextTetramino.remove();
+        fallingTetramino = nextTetramino.remove();
         refillQueue();
+        fallingY = 20;
+        fallingRotation = 0;
+        fallingX = 5;
+        if (!checkPosition(fallingX, fallingY, fallingRotation)) {
+            isGameOver = true;
+            fireUpdateState();
+        }
     }
 
     private void refillQueue() {
@@ -63,21 +70,71 @@ public class GameLogic {
     }
 
     public void gameTick() {
-        if (isGameOver || isPaused)
-            return;
+        if (!isGameOver && !isPaused)
+            tryDown();
     }
 
     public void togglePause() {
         isPaused ^= true;
+        fireUpdateState();
     }
 
-    public void tryLeft() {}
+    public void tryLeft() {
+        if (isGameOver || isPaused)
+            return;
+        if (checkPosition(fallingX - 1, fallingY, fallingRotation)) {
+            fallingX--;
+            fireUpdateState();
+        }
+    }
 
-    public void tryRight() {}
+    public void tryRight() {
+        if (isGameOver || isPaused)
+            return;
+        if (checkPosition(fallingX + 1, fallingY, fallingRotation)) {
+            fallingX++;
+            fireUpdateState();
+        }
+    }
 
-    public void tryRotate() {}
+    public void tryRotate() {
+        if (isGameOver || isPaused)
+            return;
+        fallingRotation = (fallingRotation + 1) % 4;
+        fireUpdateState();
+    }
 
-    public void tryDown() {}
+    public void tryDown() {
+        if (isGameOver || isPaused)
+            return;
+        if (checkPosition(fallingX, fallingY - 1, fallingRotation)) {
+            fallingY--;
+        } else {
+            fixate();
+        }
+        fireUpdateState();
+    }
+
+    private void fixate() {
+        for (int[] xy : fallingTetramino.coords(fallingRotation)) {
+            int ex = xy[0] + fallingX;
+            int ey = xy[1] + fallingY;
+            fieldState[ey][ex] = fallingTetramino.ordinal();
+        }
+        takeNext();
+    }
+
+    private boolean checkPosition(int x, int y, int rot) {
+        for (int[] xy : fallingTetramino.coords(rot)) {
+            int ex = xy[0] + x;
+            int ey = xy[1] + y;
+            if (ex < 0 || ey < 0 || ex >= FIELD_WIDTH || ey >= FIELD_HEIGHT_HIDDEN)
+                return false;
+            if (fieldState[ey][ex] >= 0)
+                return false;
+        }
+        return true;
+    }
 
     public void addStateListener(Runnable listener) {
         synchronized (stateListeners) {
@@ -99,8 +156,8 @@ public class GameLogic {
         }
     }
 
-    public Tetramino getCurrentTetramino() {
-        return currentTetramino;
+    public Tetramino getFallingTetramino() {
+        return fallingTetramino;
     }
 
     public Tetramino getNextTetramino() {
@@ -118,11 +175,23 @@ public class GameLogic {
         return Tetramino.values()[idx];
     }
 
-    public int getCurrentRotation() {
-        return currentRotation;
+    public int getFallingRotation() {
+        return fallingRotation;
+    }
+
+    public int getFallingX() {
+        return fallingX;
+    }
+
+    public int getFallingY() {
+        return fallingY;
     }
 
     public boolean isGameOver() {
         return isGameOver;
+    }
+
+    public boolean isGamePaused() {
+        return isPaused;
     }
 }
