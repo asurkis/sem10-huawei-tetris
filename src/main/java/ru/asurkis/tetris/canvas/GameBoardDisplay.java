@@ -59,6 +59,8 @@ public class GameBoardDisplay extends JPanel {
             g.fillRect(tx, ty, cellSize, cellSize);
         }
 
+        g.setColor(Color.WHITE);
+        g.drawRect(0, 0, boardW - 1, boardH - 1);
         graphics.drawImage(backBuffer, 0, 0, this);
     }
 }

@@ -100,8 +100,11 @@ public class GameLogic {
     public void tryRotate() {
         if (isGameOver || isPaused)
             return;
-        fallingRotation = (fallingRotation + 1) % 4;
-        fireUpdateState();
+        int nextRot = (fallingRotation + 1) % 4;
+        if (checkPosition(fallingX, fallingY, nextRot)) {
+            fallingRotation = nextRot;
+            fireUpdateState();
+        }
     }
 
     public void tryDown() {
@@ -121,7 +124,31 @@ public class GameLogic {
             int ey = xy[1] + fallingY;
             fieldState[ey][ex] = fallingTetramino.ordinal();
         }
+        clearRows();
         takeNext();
+    }
+
+    private void clearRows() {
+        boolean[] toRemove = new boolean[FIELD_HEIGHT_HIDDEN];
+        for (int y = FIELD_HEIGHT_HIDDEN - 1; y >= 0; y--) {
+            int count = 0;
+            for (int x = 0; x < FIELD_WIDTH; x++) {
+                if (fieldState[y][x] >= 0)
+                    count++;
+            }
+            toRemove[y] = count == FIELD_WIDTH;
+        }
+
+        int i = 0;
+        for (int j = 0; j < FIELD_HEIGHT_HIDDEN; j++) {
+            if(!toRemove[j]) {
+                System.arraycopy(fieldState[j], 0, fieldState[i], 0, FIELD_WIDTH);
+                i++;
+            }
+        }
+        for (; i < FIELD_HEIGHT_HIDDEN; i++) {
+            Arrays.fill(fieldState[i], -1);
+        }
     }
 
     private boolean checkPosition(int x, int y, int rot) {
