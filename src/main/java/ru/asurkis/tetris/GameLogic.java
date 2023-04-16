@@ -4,16 +4,21 @@ import java.util.*;
 
 public class GameLogic {
     public static final int FIELD_WIDTH = 10;
-    public static final int FIELD_HEIGHT = 20;
+    public static final int FIELD_HEIGHT_VISIBLE = 20;
+    public static final int FIELD_HEIGHT_HIDDEN = 24;
 
     private final List<Runnable> stateListeners = new ArrayList<>();
     private final Random random;
 
     private Tetramino currentTetramino;
+    private int currentX;
+    private int currentY;
+    private int currentQuarter;
     private int currentRotation;
     private final Queue<Tetramino> nextTetramino = new ArrayDeque<>();
-    private final int[][] fieldState = new int[FIELD_HEIGHT][FIELD_WIDTH];
+    private final int[][] fieldState = new int[FIELD_HEIGHT_HIDDEN][FIELD_WIDTH];
 
+    private boolean isPaused;
     private boolean isGameOver;
 
     public GameLogic(long randomSeed) {
@@ -30,7 +35,7 @@ public class GameLogic {
         isGameOver = false;
         nextTetramino.clear();
         refillQueue();
-        for (int i = 0; i < FIELD_HEIGHT; i++) {
+        for (int i = 0; i < FIELD_HEIGHT_HIDDEN; i++) {
             Arrays.fill(fieldState[i], -1);
         }
     }
@@ -58,8 +63,21 @@ public class GameLogic {
     }
 
     public void gameTick() {
-
+        if (isGameOver || isPaused)
+            return;
     }
+
+    public void togglePause() {
+        isPaused ^= true;
+    }
+
+    public void tryLeft() {}
+
+    public void tryRight() {}
+
+    public void tryRotate() {}
+
+    public void tryDown() {}
 
     public void addStateListener(Runnable listener) {
         synchronized (stateListeners) {
@@ -102,5 +120,9 @@ public class GameLogic {
 
     public int getCurrentRotation() {
         return currentRotation;
+    }
+
+    public boolean isGameOver() {
+        return isGameOver;
     }
 }
