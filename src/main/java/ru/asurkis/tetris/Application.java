@@ -73,9 +73,6 @@ public class Application {
         }, 250, 250);
     }
 
-    void start() {
-    }
-
     public static void main(String[] args) {
         new Application().run();
     }
