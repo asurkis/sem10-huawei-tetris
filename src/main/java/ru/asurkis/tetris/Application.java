@@ -1,7 +1,6 @@
 package ru.asurkis.tetris;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Timer;
 
 public class Application {
@@ -14,7 +13,7 @@ public class Application {
         frame.add(canvas);
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.addWindowListener(new MyWindowListener(this));
+        frame.addKeyListener(new MyKeyListener());
     }
 
     void start() {

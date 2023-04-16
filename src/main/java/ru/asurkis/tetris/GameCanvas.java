@@ -11,6 +11,7 @@ public class GameCanvas extends Canvas {
         setMinimumSize(new Dimension(640, 480));
         setPreferredSize(getMinimumSize());
         this.game = game;
+        game.addStateListener(this::invalidate);
     }
 
     @Override
