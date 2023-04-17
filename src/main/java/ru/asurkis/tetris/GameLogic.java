@@ -17,6 +17,9 @@ public class GameLogic {
     private final int[][] fieldState = new int[FIELD_HEIGHT_HIDDEN][FIELD_WIDTH];
 
     private boolean isGameOver;
+    private boolean paused;
+
+    private final ArrayList<Runnable> updateListeners = new ArrayList<>();
 
     public GameLogic(long randomSeed) {
         random = new Random(randomSeed);
@@ -65,40 +68,47 @@ public class GameLogic {
     }
 
     public void gameTick() {
-        if (!isGameOver)
+        if (!isGameOver && !paused)
             tryDown();
     }
 
     public void tryLeft() {
-        if (isGameOver)
+        if (isGameOver || paused)
             return;
-        if (checkPosition(fallingX - 1, fallingY, fallingRotation))
+        if (checkPosition(fallingX - 1, fallingY, fallingRotation)) {
             fallingX--;
+            fireUpdate();
+        }
     }
 
     public void tryRight() {
-        if (isGameOver)
+        if (isGameOver || paused)
             return;
-        if (checkPosition(fallingX + 1, fallingY, fallingRotation))
+        if (checkPosition(fallingX + 1, fallingY, fallingRotation)) {
             fallingX++;
+            fireUpdate();
+        }
     }
 
     public void tryRotate() {
-        if (isGameOver)
+        if (isGameOver || paused)
             return;
         int nextRot = (fallingRotation + 1) % 4;
-        if (checkPosition(fallingX, fallingY, nextRot))
+        if (checkPosition(fallingX, fallingY, nextRot)) {
             fallingRotation = nextRot;
+            fireUpdate();
+        }
     }
 
     public void tryDown() {
-        if (isGameOver)
+        if (isGameOver || paused)
             return;
         if (checkPosition(fallingX, fallingY - 1, fallingRotation)) {
             fallingY--;
         } else {
             fixate();
         }
+        fireUpdate();
     }
 
     private void fixate() {
@@ -179,5 +189,26 @@ public class GameLogic {
 
     public boolean isGameOver() {
         return isGameOver;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public void togglePause() {
+        paused ^= true;
+    }
+
+    public void addUpdateListener(Runnable r) {
+        updateListeners.add(r);
+    }
+
+    public void removeUpdateListener(Runnable r) {
+        updateListeners.remove(r);
+    }
+
+    private void fireUpdate() {
+        for (Runnable r : updateListeners)
+            r.run();
     }
 }

@@ -12,13 +12,16 @@ import static ru.asurkis.tetris.canvas.Constants.MIN_CELL_SIZE;
 
 public class TetraminoPeeker extends JPanel {
     private BufferedImage backBuffer = new BufferedImage(4 * MIN_CELL_SIZE, 4 * MIN_CELL_SIZE, BufferedImage.TYPE_3BYTE_BGR);
+    private final GameLogic game;
 
-    public TetraminoPeeker() {
+    public TetraminoPeeker(GameLogic game) {
+        this.game = game;
+        game.addUpdateListener(this::repaint);
         setMinimumSize(new Dimension(4 * MIN_CELL_SIZE, 4 * MIN_CELL_SIZE));
         setPreferredSize(getMinimumSize());
     }
 
-    public void updateBackBuffer(GameLogic game) {
+    public void updateBackBuffer() {
         int w = getWidth();
         int h = getHeight();
         if (backBuffer.getWidth() < w || backBuffer.getHeight() < h)
@@ -45,6 +48,7 @@ public class TetraminoPeeker extends JPanel {
 
     @Override
     public void paintComponent(Graphics graphics) {
+        updateBackBuffer();
         graphics.drawImage(backBuffer, 0, 0, this);
     }
 }
