@@ -78,28 +78,20 @@ public class Application {
     private void eventLoop() {
         while (true) {
             InputEvent evt = events.poll();
-            if (evt == null) {
-                synchronized (this) {
-                    try {
-                        this.wait();
-                    } catch (InterruptedException e) {
-                        break;
+            if (evt != null) {
+                switch (evt) {
+                    case LEFT -> game.tryLeft();
+                    case RIGHT -> game.tryRight();
+                    case DOWN -> game.tryDown();
+                    case ROTATE -> game.tryRotate();
+                    case PAUSE -> isGamePaused ^= true;
+                    case RESET -> game.reset();
+                    case TIMER -> {
+                        if (!isGamePaused)
+                            game.gameTick();
                     }
                 }
                 continue;
-            }
-
-            switch (evt) {
-                case LEFT -> game.tryLeft();
-                case RIGHT -> game.tryRight();
-                case DOWN -> game.tryDown();
-                case ROTATE -> game.tryRotate();
-                case PAUSE -> isGamePaused ^= true;
-                case RESET -> game.reset();
-                case TIMER -> {
-                    if (!isGamePaused)
-                        game.gameTick();
-                }
             }
 
             if (game.isGameOver()) {
@@ -113,6 +105,14 @@ public class Application {
             tetraminoPeeker.updateBackBuffer(game);
             gameBoardDisplay.repaint();
             tetraminoPeeker.repaint();
+
+            synchronized (this) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
         }
     }
 
