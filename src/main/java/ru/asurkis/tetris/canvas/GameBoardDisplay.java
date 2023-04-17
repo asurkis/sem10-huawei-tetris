@@ -13,18 +13,14 @@ import static ru.asurkis.tetris.canvas.Constants.CELL_COLORS;
 import static ru.asurkis.tetris.canvas.Constants.MIN_CELL_SIZE;
 
 public class GameBoardDisplay extends JPanel {
-    private final GameLogic game;
     private BufferedImage backBuffer = new BufferedImage(FIELD_WIDTH * MIN_CELL_SIZE, FIELD_HEIGHT_VISIBLE * MIN_CELL_SIZE, BufferedImage.TYPE_3BYTE_BGR);
 
-    public GameBoardDisplay(GameLogic game) {
+    public GameBoardDisplay() {
         setMinimumSize(new Dimension(FIELD_WIDTH * MIN_CELL_SIZE, FIELD_HEIGHT_VISIBLE * MIN_CELL_SIZE));
         setPreferredSize(getMinimumSize());
-        this.game = game;
-        game.addStateListener(this::repaint);
     }
 
-    @Override
-    public void paintComponent(Graphics graphics) {
+    public void updateBackBuffer(GameLogic game) {
         int w = getWidth();
         int h = getHeight();
         if (backBuffer.getWidth() < w || backBuffer.getHeight() < h)
@@ -61,6 +57,10 @@ public class GameBoardDisplay extends JPanel {
 
         g.setColor(Color.WHITE);
         g.drawRect(0, 0, boardW - 1, boardH - 1);
+    }
+
+    @Override
+    public void paintComponent(Graphics graphics) {
         graphics.drawImage(backBuffer, 0, 0, this);
     }
 }

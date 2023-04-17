@@ -7,7 +7,6 @@ public class GameLogic {
     public static final int FIELD_HEIGHT_VISIBLE = 20;
     public static final int FIELD_HEIGHT_HIDDEN = 24;
 
-    private final List<Runnable> stateListeners = new ArrayList<>();
     private final Random random;
 
     private Tetramino fallingTetramino;
@@ -17,7 +16,6 @@ public class GameLogic {
     private final Queue<Tetramino> nextTetramino = new ArrayDeque<>();
     private final int[][] fieldState = new int[FIELD_HEIGHT_HIDDEN][FIELD_WIDTH];
 
-    private boolean isPaused;
     private boolean isGameOver;
 
     public GameLogic(long randomSeed) {
@@ -37,7 +35,6 @@ public class GameLogic {
         isGameOver = false;
         nextTetramino.clear();
         takeNext();
-        fireUpdateState();
     }
 
     private void takeNext() {
@@ -47,10 +44,8 @@ public class GameLogic {
         fallingY = 20;
         fallingRotation = 0;
         fallingX = 5;
-        if (!checkPosition(fallingX, fallingY, fallingRotation)) {
+        if (!checkPosition(fallingX, fallingY, fallingRotation))
             isGameOver = true;
-            fireUpdateState();
-        }
     }
 
     private void refillQueue() {
@@ -70,52 +65,40 @@ public class GameLogic {
     }
 
     public void gameTick() {
-        if (!isGameOver && !isPaused)
+        if (!isGameOver)
             tryDown();
     }
 
-    public void togglePause() {
-        isPaused ^= true;
-        fireUpdateState();
-    }
-
     public void tryLeft() {
-        if (isGameOver || isPaused)
+        if (isGameOver)
             return;
-        if (checkPosition(fallingX - 1, fallingY, fallingRotation)) {
+        if (checkPosition(fallingX - 1, fallingY, fallingRotation))
             fallingX--;
-            fireUpdateState();
-        }
     }
 
     public void tryRight() {
-        if (isGameOver || isPaused)
+        if (isGameOver)
             return;
-        if (checkPosition(fallingX + 1, fallingY, fallingRotation)) {
+        if (checkPosition(fallingX + 1, fallingY, fallingRotation))
             fallingX++;
-            fireUpdateState();
-        }
     }
 
     public void tryRotate() {
-        if (isGameOver || isPaused)
+        if (isGameOver)
             return;
         int nextRot = (fallingRotation + 1) % 4;
-        if (checkPosition(fallingX, fallingY, nextRot)) {
+        if (checkPosition(fallingX, fallingY, nextRot))
             fallingRotation = nextRot;
-            fireUpdateState();
-        }
     }
 
     public void tryDown() {
-        if (isGameOver || isPaused)
+        if (isGameOver)
             return;
         if (checkPosition(fallingX, fallingY - 1, fallingRotation)) {
             fallingY--;
         } else {
             fixate();
         }
-        fireUpdateState();
     }
 
     private void fixate() {
@@ -163,26 +146,6 @@ public class GameLogic {
         return true;
     }
 
-    public void addStateListener(Runnable listener) {
-        synchronized (stateListeners) {
-            stateListeners.add(listener);
-        }
-    }
-
-    public void removeStateListener(Runnable listener) {
-        synchronized (stateListeners) {
-            stateListeners.remove(listener);
-        }
-    }
-
-    private void fireUpdateState() {
-        synchronized (stateListeners) {
-            for (Runnable listener : stateListeners) {
-                listener.run();
-            }
-        }
-    }
-
     public Tetramino getFallingTetramino() {
         return fallingTetramino;
     }
@@ -216,9 +179,5 @@ public class GameLogic {
 
     public boolean isGameOver() {
         return isGameOver;
-    }
-
-    public boolean isGamePaused() {
-        return isPaused;
     }
 }

@@ -5,16 +5,27 @@ import ru.asurkis.tetris.canvas.TetraminoPeeker;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.locks.Condition;
 
 import static ru.asurkis.tetris.GameLogic.FIELD_WIDTH;
 import static ru.asurkis.tetris.GameLogic.FIELD_HEIGHT_VISIBLE;
 
 public class Application {
-    void run() {
+    private final GameLogic game = new GameLogic();
+    private final GameBoardDisplay gameBoardDisplay = new GameBoardDisplay();
+    private final TetraminoPeeker tetraminoPeeker = new TetraminoPeeker();
+    private final JLabel gameStatus = new JLabel();
+    private final Queue<InputEvent> events = new ArrayBlockingQueue<>(128);
+
+    private boolean isGamePaused = false;
+
+    void start() {
         JFrame frame = new JFrame("Tetris");
-        GameLogic game = new GameLogic();
         frame.setLayout(new GridBagLayout());
 
         GridBagConstraints gbcBoard = new GridBagConstraints();
@@ -44,36 +55,75 @@ public class Application {
         gbcInfo.weighty = 1.0;
         gbcInfo.fill = GridBagConstraints.BOTH;
 
-        JLabel gameStatus = new JLabel();
-        game.addStateListener(() -> {
-            if (game.isGameOver()) {
-                gameStatus.setText("Game over!");
-            } else if (game.isGamePaused()) {
-                gameStatus.setText("PAUSE");
-            } else {
-                gameStatus.setText("");
-            }
-        });
-
-        frame.add(new GameBoardDisplay(game), gbcBoard);
-        frame.add(new TetraminoPeeker(game), gbcPeeker);
+        frame.add(gameBoardDisplay, gbcBoard);
+        frame.add(tetraminoPeeker, gbcPeeker);
         frame.add(gameStatus, gbcInfo);
 
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.addKeyListener(new MyKeyListener(game));
+        frame.addKeyListener(new MyKeyListener(this));
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                game.gameTick();
+                feedEvent(InputEvent.TIMER);
             }
         }, 250, 250);
+
+        eventLoop();
+    }
+
+    private void eventLoop() {
+        while (true) {
+            InputEvent evt = events.poll();
+            if (evt == null) {
+                synchronized (this) {
+                    try {
+                        this.wait();
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+                continue;
+            }
+
+            switch (evt) {
+                case LEFT -> game.tryLeft();
+                case RIGHT -> game.tryRight();
+                case DOWN -> game.tryDown();
+                case ROTATE -> game.tryRotate();
+                case PAUSE -> isGamePaused ^= true;
+                case RESET -> game.reset();
+                case TIMER -> {
+                    if (!isGamePaused)
+                        game.gameTick();
+                }
+            }
+
+            if (game.isGameOver()) {
+                gameStatus.setText("Game over!");
+            } else if (isGamePaused) {
+                gameStatus.setText("PAUSE");
+            } else {
+                gameStatus.setText("");
+            }
+            gameBoardDisplay.updateBackBuffer(game);
+            tetraminoPeeker.updateBackBuffer(game);
+            gameBoardDisplay.repaint();
+            tetraminoPeeker.repaint();
+        }
+    }
+
+    public void feedEvent(InputEvent event) {
+        events.add(event);
+        synchronized (this) {
+            this.notify();
+        }
     }
 
     public static void main(String[] args) {
-        new Application().run();
+        new Application().start();
     }
 }
