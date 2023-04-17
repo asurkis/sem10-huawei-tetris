@@ -19,13 +19,13 @@ public class Application {
     private final GameLogic game = new GameLogic();
     private final GameBoardDisplay gameBoardDisplay = new GameBoardDisplay();
     private final TetraminoPeeker tetraminoPeeker = new TetraminoPeeker();
+    private final JFrame frame = new JFrame("Tetris");
     private final JLabel gameStatus = new JLabel();
     private final Queue<InputEvent> events = new ArrayBlockingQueue<>(128);
 
     private boolean isGamePaused = false;
 
     void start() {
-        JFrame frame = new JFrame("Tetris");
         frame.setLayout(new GridBagLayout());
 
         GridBagConstraints gbcBoard = new GridBagConstraints();
@@ -76,8 +76,22 @@ public class Application {
     }
 
     private void eventLoop() {
+        long updateStart = System.nanoTime();
+        int loopRuns = 0;
+        int redraws = 0;
         while (true) {
+            long nanos = System.nanoTime();
+            long elapsed = nanos - updateStart;
+            if (elapsed >= 1_000_000_000) {
+                double fps = 1e9 * redraws / elapsed;
+                double tps = 1e9 * loopRuns / elapsed;
+                frame.setTitle(String.format("Tetris | FPS: %.2f TPS: %.2f", fps, tps));
+                redraws = 0;
+                loopRuns = 0;
+                updateStart = nanos;
+            }
             InputEvent evt = events.poll();
+            loopRuns++;
             if (evt != null) {
                 switch (evt) {
                     case LEFT -> game.tryLeft();
@@ -105,6 +119,7 @@ public class Application {
             tetraminoPeeker.updateBackBuffer(game);
             gameBoardDisplay.repaint();
             tetraminoPeeker.repaint();
+            redraws++;
 
             synchronized (this) {
                 try {
